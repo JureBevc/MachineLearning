@@ -167,13 +167,19 @@ public class Main{
 
   Net net;
   int passes = 0;
+  File imgFolder;
   public void start(){
     // Create net
     net  = new Net();
     net.createNet(new int[]{100,10, 10});
     try{
-      int initialLearningPasses = 20000;
+
+      imgFolder = new File("tests/");
+      System.out.println("Number of tests: " + imgFolder.listFiles().length);
+
+      int initialLearningPasses = 100000;
       System.out.println("Initial learning passes = " + initialLearningPasses + "...");
+
     for(int i = 0; i < initialLearningPasses; i++){
       learn();
       if(i % 500 == 0)
@@ -201,9 +207,14 @@ public void learn(){
       double output[] = new double[10];
 
       // Pick image
-      int number = (int)(Math.random() * 10); // TODO: Extend to multiple numbers, multiple examples
+
+      int fileNumber = (int)(Math.random() * imgFolder.listFiles().length);
+      String fileName = imgFolder.listFiles()[fileNumber].getName();
+      int number = Integer.parseInt("" + fileName.charAt(fileName.length() - 5));
       output[number] = 1;
-      BufferedImage img = ImageIO.read(Main.class.getResourceAsStream("/tests/" + number + ".png"));
+      BufferedImage img = ImageIO.read(Main.class.getResourceAsStream("/tests/" + fileName));
+
+      // Set inputs
       for(int i = 0; i < img.getWidth(); i++){
         for(int j = 0; j < img.getHeight(); j++){
           int b = img.getRGB(i, j) & 0XFF;
