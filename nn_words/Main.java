@@ -1,6 +1,8 @@
 import java.util.*;
 import java.io.*;
-
+import javax.imageio.*;
+import java.awt.*;
+import java.awt.image.*;
 //
 // The node
 //
@@ -48,8 +50,10 @@ class Node{
   public void updateWeights(Node[] lastLayer){
     // eta -> learn reate
     // alpha -> momentum
+    // (I don't want to touch these)
     double eta = 0.01;
     double alpha = 0.5;
+    //System.out.println("Grad: " + grad);
     for(int i = 0; i < lastLayer.length - 1; i++){
       double newDelta =
       eta
@@ -62,13 +66,15 @@ class Node{
     }
   }
 
+  // activator function
   private static double act(double x){
     return Math.tanh(x);
   }
 
+  // derivative of activator function
   private static double actDerivative(double x){
     double r = Math.tanh(x);
-    return 1 - x * x;
+    return 1 - r * r; // close enough derivative
   }
 
 }
@@ -147,71 +153,115 @@ class Net{
     return r;
   }
 
+  public double[] getAllResults(){
+    double r[] = new double[nodes[nodes.length - 1].length - 1];
+    for(int i = 0; i < nodes[nodes.length - 1].length - 1; i++)
+      r[i] = nodes[nodes.length - 1][i].output;
+    return r;
+  }
+
 }
 
 //
 // Main
-//
+//y
 
 public class Main{
 
+  int netArh[] = {5,50, 2};
   Net net;
   int passes = 0;
+
+  String fileName1 = "tests/english.txt";
+  String fileName2 = "tests/slovensko.txt";
+  BufferedReader br1;
+  BufferedReader br2;
   public void start(){
     // Create net
     net  = new Net();
-    net.createNet(new int[]{2,3,3,1});
+    net.createNet(netArh);
     try{
-      int initialLearningPasses = 1000;
+
+      br1 = new BufferedReader(new FileReader(fileName1));
+      br2 = new BufferedReader(new FileReader(fileName2));
+
+      int initialLearningPasses = 500000;
       System.out.println("Initial learning passes = " + initialLearningPasses + "...");
-    for(int i = 0; i < initialLearningPasses; i++)
+
+    for(int i = 0; i < initialLearningPasses; i++){
       learn();
-    System.out.println("\nFinished learning.");
-    System.out.flush();
-    System.out.println("...");
+      if(i % 500 == 0)
+        System.out.println(i + "...");
+    }
+    System.out.println("\nFinished.");
     System.out.flush();
     // User input
     Scanner sc = new Scanner(System.in);
-    String line = "";
-    do{
+    String line = sc.nextLine();
+    while(!line.equals("q")){
+      guess(line);
       line = sc.nextLine();
-      if(line.equals("q"))
-        continue;
-
-      double input[] = new double[2];
-      input[0] = Double.parseDouble(line.split(" ")[0].trim());
-      input[1] = Double.parseDouble(line.split(" ")[1].trim());
-      net.feedInput(input);
-      //net.backProp(output);
-      System.out.print("\u001B[32m");
-      System.out.println((int)(Double.parseDouble(net.getResult()) * 100) / 100.0);
-      System.out.print("\u001B[0m");
-    }while(!line.equals("q"));
+    }
     sc.close();
     }catch(Exception e){
       e.printStackTrace();
     }
   }
 
-  public void learn(){
+public void learn(){
     try{
-    BufferedReader br = new BufferedReader(new FileReader("tests/InputsXOR.txt"));
-    double input[] = new double[2];
-    double output[] = new double[1];
-    while(br.ready()){
-      String line = br.readLine();
-      input[0] = Double.parseDouble(line.split(" ")[0].trim());
-      input[1] = Double.parseDouble(line.split(" ")[1].trim());
-      output[0] = Double.parseDouble(line.split("=")[1].trim());
+      double input[] = new double[5];
+      double output[] = new double[2];
+
+      if(!br1.ready())
+            br1 = new BufferedReader(new FileReader(fileName1));
+      if(!br2.ready())
+            br2 = new BufferedReader(new FileReader(fileName2));
+
+      String word = br1.readLine().toLowerCase();
+      for(int i = 0; i < 5; i++)
+        input[i] = (word.charAt(i) - 'a') / (1.0 * 'z');
+      output[0] = 1;
+      output[1] = 0;
       net.feedInput(input);
       net.backProp(output);
-    }
-    passes++;
-    br.close();
+
+      word = br2.readLine().toLowerCase();
+      for(int i = 0; i < 5; i++)
+        input[i] = (word.charAt(i) - 'a') / (1.0 * 'z');
+      output[0] = 0;
+      output[1] = 1;
+      net.feedInput(input);
+      net.backProp(output);
+
     }catch(Exception e){
       e.printStackTrace();
     }
   }
+
+  public void guess(String word){
+    try{
+      while(word.length() < 5){
+        word = word + " ";
+      }
+      double input[] = new double[5];
+      for(int i = 0; i < 5; i++)
+        input[i] = (word.charAt(i) - 'a') / (1.0 * 'z');
+      net.feedInput(input);
+
+      double res[] = net.getAllResults();
+      String first = fileName1.split("/")[1].replace(".txt", "");
+      String second = fileName2.split("/")[1].replace(".txt", "");
+      System.out.print("\u001B[32m");
+      System.out.println("My guess:");
+      System.out.println(first + ": " + (int)(res[0] * 100) + "%");
+      System.out.println(second + ": " + (int)(res[1] * 100) + "%");
+      System.out.print("\u001B[0m");
+    }catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
 
   public static void main(String[] args){
    Main main = new Main();

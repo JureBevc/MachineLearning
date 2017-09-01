@@ -171,13 +171,13 @@ public class Main{
   public void start(){
     // Create net
     net  = new Net();
-    net.createNet(new int[]{100,10, 10});
+    net.createNet(new int[]{100,50, 10});
     try{
 
       imgFolder = new File("tests/");
       System.out.println("Number of tests: " + imgFolder.listFiles().length);
 
-      int initialLearningPasses = 100000;
+      int initialLearningPasses = 500000;
       System.out.println("Initial learning passes = " + initialLearningPasses + "...");
 
     for(int i = 0; i < initialLearningPasses; i++){
@@ -260,7 +260,6 @@ public void learn(){
       e.printStackTrace();
     }
   }
-
 
   public static void main(String[] args){
    Main main = new Main();
