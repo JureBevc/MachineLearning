@@ -1,2 +1,2 @@
 # MachineLearning
-Me trying to learn machine learning
+Neural network implementation in Java
